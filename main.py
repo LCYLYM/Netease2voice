@@ -166,10 +166,17 @@ class MyPlugin(BasePlugin):
     @handler(PersonNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
         print(f"处理消息，当前encoder路径: {self.encoder_path}")
-        # 使用系统ffmpeg
         ffmpeg_path = 'ffmpeg'
-        # 使用类中预设的encoder路径
         encoder_path = self.encoder_path
+        
+        # ... 在处理点歌请求时添加这些调试信息 ...
+        print(f"下载目录: {download_dir}")
+        print(f"MP3路径: {mp3_path}")
+        print(f"SILK路径: {silk_path}")
+        
+        # 在调用mp3_to_silk之前打印所有参数
+        print(f"转换参数: mp3_file={mp3_path}, ffmpeg_path={ffmpeg_path}, encoder_path={encoder_path}, silk_file_path={silk_path}")
+        
         if not encoder_path:
             print("错误: encoder_path为None")
             return
