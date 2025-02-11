@@ -92,31 +92,46 @@ def download_song(url, directory, filename):
 
 def mp3_to_silk(mp3_file, ffmpeg_path, encoder_path, silk_file_path):
     import subprocess
-
-    mp3_file = r"{}".format(mp3_file)
-    ffmpeg_path = r"{}".format(ffmpeg_path)
-    encoder_path = r"{}".format(encoder_path)
-    silk_file_path = r"{}".format(silk_file_path)
-
+    import os
+    
+    # 确保使用正确的临时文件路径
+    temp_pcm = os.path.join(os.path.dirname(mp3_file), 'temp.pcm')
+    
     try:
+        # 使用系统ffmpeg命令
         subprocess.run([
-            ffmpeg_path,
+            'ffmpeg',
             '-y',
             '-i', mp3_file,
             '-f', 's16le',
             '-ar', '24000',
             '-ac', '1',
-            'temp.pcm'
+            temp_pcm
         ], check=True)
 
+        # 使用silk encoder
         subprocess.run([
             encoder_path,
-            'temp.pcm',
+            temp_pcm,
             silk_file_path,
             '-rate', '24000',
             '-tencent'
         ], check=True)
-    except subprocess.CalledProcessError:
+        
+        # 清理临时文件
+        if os.path.exists(temp_pcm):
+            os.remove(temp_pcm)
+            
+    except subprocess.CalledProcessError as e:
+        print(f"转换过程出错: {e}")
+        # 确保清理临时文件
+        if os.path.exists(temp_pcm):
+            os.remove(temp_pcm)
+        return None
+    except Exception as e:
+        print(f"发生错误: {e}")
+        if os.path.exists(temp_pcm):
+            os.remove(temp_pcm)
         return None
 
     return silk_file_path
@@ -135,10 +150,11 @@ class MyPlugin(BasePlugin):
 
     @handler(PersonNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
-        ffmpeg_path = os.path.join(
-            os.path.dirname(__file__), 'music', 'ffmpeg.exe')
-        encoder_path = os.path.join(os.path.dirname(
-            __file__), 'music', 'silk_v3_encoder.exe')
+        # 使用系统ffmpeg
+        ffmpeg_path = 'ffmpeg'
+        # 使用正确的encoder路径
+        encoder_path = os.path.join(
+            os.path.dirname(__file__), 'music', 'silk_v3_encoder')
         msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
@@ -199,10 +215,11 @@ class MyPlugin(BasePlugin):
 
     @handler(GroupNormalMessageReceived)
     async def group_normal_message_received(self, ctx: EventContext):
-        ffmpeg_path = os.path.join(
-            os.path.dirname(__file__), 'music', 'ffmpeg.exe')
-        encoder_path = os.path.join(os.path.dirname(
-            __file__), 'music', 'silk_v3_encoder.exe')
+        # 使用系统ffmpeg
+        ffmpeg_path = 'ffmpeg'
+        # 使用正确的encoder路径
+        encoder_path = os.path.join(
+            os.path.dirname(__file__), 'music', 'silk_v3_encoder')
         msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
