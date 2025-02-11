@@ -177,15 +177,7 @@ class MyPlugin(BasePlugin):
             print(f"错误: encoder不存在于路径 {encoder_path}")
             return
             
-        # ... 在处理点歌请求时添加这些调试信息 ...
-        print(f"下载目录: {download_dir}")
-        print(f"MP3路径: {mp3_path}")
-        print(f"SILK路径: {silk_path}")
-        
-        # 在调用mp3_to_silk之前打印所有参数
-        print(f"转换参数: mp3_file={mp3_path}, ffmpeg_path={ffmpeg_path}, encoder_path={encoder_path}, silk_file_path={silk_path}")
-        
-        msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
+        msg: str = ctx.event.text_message
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
             ctx.prevent_default()
@@ -243,11 +235,18 @@ class MyPlugin(BasePlugin):
 
     @handler(GroupNormalMessageReceived)
     async def group_normal_message_received(self, ctx: EventContext):
-        # 使用系统ffmpeg
-        ffmpeg_path = 'ffmpeg'
-        # 使用类中预设的encoder路径
+        # 使用本地ffmpeg
+        ffmpeg_path = self.ffmpeg_path
         encoder_path = self.encoder_path
-        msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
+        
+        if not os.path.exists(ffmpeg_path):
+            print(f"错误: ffmpeg不存在于路径 {ffmpeg_path}")
+            return
+        if not os.path.exists(encoder_path):
+            print(f"错误: encoder不存在于路径 {encoder_path}")
+            return
+            
+        msg: str = ctx.event.text_message
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
             ctx.prevent_default()
