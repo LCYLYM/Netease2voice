@@ -140,16 +140,24 @@ def mp3_to_silk(mp3_file, ffmpeg_path, encoder_path, silk_file_path):
 @register(name="Netease_get", description="点歌", version="1.2", author="GryllsGYS")
 class MyPlugin(BasePlugin):
 
-    # 插件加载时触发
     def __init__(self, host: APIHost):
         super().__init__(host)
-        # 在初始化时确定插件目录
-        self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
-        # 预先设置好encoder路径
+        # 添加调试信息
+        print("初始化插件...")
+        # 获取当前文件的绝对路径
+        current_file = os.path.abspath(__file__)
+        print(f"当前文件路径: {current_file}")
+        # 获取插件目录
+        self.plugin_dir = os.path.dirname(current_file)
+        print(f"插件目录: {self.plugin_dir}")
+        # 设置encoder路径
         self.encoder_path = os.path.join(self.plugin_dir, 'music', 'silk_v3_encoder')
-        # 确保encoder存在
+        print(f"Encoder路径: {self.encoder_path}")
+        # 检查路径是否存在
         if not os.path.exists(self.encoder_path):
             print(f"警告: encoder不存在于路径 {self.encoder_path}")
+        else:
+            print("encoder文件存在")
 
     # 异步初始化
     async def initialize(self):
@@ -157,10 +165,17 @@ class MyPlugin(BasePlugin):
 
     @handler(PersonNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
+        print(f"处理消息，当前encoder路径: {self.encoder_path}")
         # 使用系统ffmpeg
         ffmpeg_path = 'ffmpeg'
         # 使用类中预设的encoder路径
         encoder_path = self.encoder_path
+        if not encoder_path:
+            print("错误: encoder_path为None")
+            return
+        if not os.path.exists(encoder_path):
+            print(f"错误: encoder不存在于路径 {encoder_path}")
+            return
         msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
