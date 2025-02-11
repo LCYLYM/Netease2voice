@@ -98,9 +98,9 @@ def mp3_to_silk(mp3_file, ffmpeg_path, encoder_path, silk_file_path):
     temp_pcm = os.path.join(os.path.dirname(mp3_file), 'temp.pcm')
     
     try:
-        # 使用系统ffmpeg命令
+        # 使用完整路径的ffmpeg
         subprocess.run([
-            'ffmpeg',
+            ffmpeg_path,  # 使用完整路径
             '-y',
             '-i', mp3_file,
             '-f', 's16le',
@@ -124,7 +124,6 @@ def mp3_to_silk(mp3_file, ffmpeg_path, encoder_path, silk_file_path):
             
     except subprocess.CalledProcessError as e:
         print(f"转换过程出错: {e}")
-        # 确保清理临时文件
         if os.path.exists(temp_pcm):
             os.remove(temp_pcm)
         return None
@@ -150,14 +149,16 @@ class MyPlugin(BasePlugin):
         # 获取插件目录
         self.plugin_dir = os.path.dirname(current_file)
         print(f"插件目录: {self.plugin_dir}")
-        # 设置encoder路径
+        # 设置encoder和ffmpeg路径
         self.encoder_path = os.path.join(self.plugin_dir, 'music', 'silk_v3_encoder')
+        self.ffmpeg_path = os.path.join(self.plugin_dir, 'music', 'ffmpeg')
         print(f"Encoder路径: {self.encoder_path}")
+        print(f"FFmpeg路径: {self.ffmpeg_path}")
         # 检查路径是否存在
         if not os.path.exists(self.encoder_path):
             print(f"警告: encoder不存在于路径 {self.encoder_path}")
-        else:
-            print("encoder文件存在")
+        if not os.path.exists(self.ffmpeg_path):
+            print(f"警告: ffmpeg不存在于路径 {self.ffmpeg_path}")
 
     # 异步初始化
     async def initialize(self):
@@ -165,10 +166,17 @@ class MyPlugin(BasePlugin):
 
     @handler(PersonNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
-        print(f"处理消息，当前encoder路径: {self.encoder_path}")
-        ffmpeg_path = 'ffmpeg'
+        # 使用本地ffmpeg
+        ffmpeg_path = self.ffmpeg_path
         encoder_path = self.encoder_path
         
+        if not os.path.exists(ffmpeg_path):
+            print(f"错误: ffmpeg不存在于路径 {ffmpeg_path}")
+            return
+        if not os.path.exists(encoder_path):
+            print(f"错误: encoder不存在于路径 {encoder_path}")
+            return
+            
         # ... 在处理点歌请求时添加这些调试信息 ...
         print(f"下载目录: {download_dir}")
         print(f"MP3路径: {mp3_path}")
@@ -177,12 +185,6 @@ class MyPlugin(BasePlugin):
         # 在调用mp3_to_silk之前打印所有参数
         print(f"转换参数: mp3_file={mp3_path}, ffmpeg_path={ffmpeg_path}, encoder_path={encoder_path}, silk_file_path={silk_path}")
         
-        if not encoder_path:
-            print("错误: encoder_path为None")
-            return
-        if not os.path.exists(encoder_path):
-            print(f"错误: encoder不存在于路径 {encoder_path}")
-            return
         msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
