@@ -142,7 +142,14 @@ class MyPlugin(BasePlugin):
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
-        pass
+        super().__init__(host)
+        # 在初始化时确定插件目录
+        self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
+        # 预先设置好encoder路径
+        self.encoder_path = os.path.join(self.plugin_dir, 'music', 'silk_v3_encoder')
+        # 确保encoder存在
+        if not os.path.exists(self.encoder_path):
+            print(f"警告: encoder不存在于路径 {self.encoder_path}")
 
     # 异步初始化
     async def initialize(self):
@@ -152,9 +159,8 @@ class MyPlugin(BasePlugin):
     async def person_normal_message_received(self, ctx: EventContext):
         # 使用系统ffmpeg
         ffmpeg_path = 'ffmpeg'
-        # 使用正确的encoder路径
-        encoder_path = os.path.join(
-            os.path.dirname(__file__), 'music', 'silk_v3_encoder')
+        # 使用类中预设的encoder路径
+        encoder_path = self.encoder_path
         msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
@@ -165,12 +171,10 @@ class MyPlugin(BasePlugin):
                 song_url = get_song_url(song_id)
                 if song_url:
                     download_dir = os.path.join(
-                        os.path.dirname(__file__), 'music')
+                        self.plugin_dir, 'music')
                     download_song(song_url, download_dir, f'{song_name}.mp3')
-                    mp3_path = os.path.join(os.path.dirname(
-                        __file__), 'music', f'{song_name}.mp3')
-                    silk_path = os.path.join(os.path.dirname(
-                        __file__), 'music', f'{song_name}.silk')
+                    mp3_path = os.path.join(self.plugin_dir, 'music', f'{song_name}.mp3')
+                    silk_path = os.path.join(self.plugin_dir, 'music', f'{song_name}.silk')
                     # 将mp3转换为silk
                     path = mp3_to_silk(mp3_path, ffmpeg_path,
                                        encoder_path, silk_path)
@@ -195,7 +199,7 @@ class MyPlugin(BasePlugin):
             # 阻止默认处理
             ctx.prevent_default()
             # 读取silk文件并转成base64
-            path = os.path.join(os.path.dirname(__file__),
+            path = os.path.join(self.plugin_dir,
                                 "voice", "200.silk")
             with open(path, "rb") as f:
                 base64_audio = base64.b64encode(f.read()).decode()
@@ -206,7 +210,7 @@ class MyPlugin(BasePlugin):
             # 阻止默认处理
             ctx.prevent_default()
             # 读取silk文件并转成base64
-            path = os.path.join(os.path.dirname(__file__),
+            path = os.path.join(self.plugin_dir,
                                 "voice", "sing.silk")
             with open(path, "rb") as f:
                 base64_audio = base64.b64encode(f.read()).decode()
@@ -217,9 +221,8 @@ class MyPlugin(BasePlugin):
     async def group_normal_message_received(self, ctx: EventContext):
         # 使用系统ffmpeg
         ffmpeg_path = 'ffmpeg'
-        # 使用正确的encoder路径
-        encoder_path = os.path.join(
-            os.path.dirname(__file__), 'music', 'silk_v3_encoder')
+        # 使用类中预设的encoder路径
+        encoder_path = self.encoder_path
         msg: str = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
         match = re.search(r'(.*)(点歌)(.*)', msg)
         if match:
@@ -230,12 +233,10 @@ class MyPlugin(BasePlugin):
                 song_url = get_song_url(song_id)
                 if song_url:
                     download_dir = os.path.join(
-                        os.path.dirname(__file__), 'music')
+                        self.plugin_dir, 'music')
                     download_song(song_url, download_dir, f'{song_name}.mp3')
-                    mp3_path = os.path.join(os.path.dirname(
-                        __file__), 'music', f'{song_name}.mp3')
-                    silk_path = os.path.join(os.path.dirname(
-                        __file__), 'music', f'{song_name}.silk')
+                    mp3_path = os.path.join(self.plugin_dir, 'music', f'{song_name}.mp3')
+                    silk_path = os.path.join(self.plugin_dir, 'music', f'{song_name}.silk')
                     # 将mp3转换为silk
                     path = mp3_to_silk(mp3_path, ffmpeg_path,
                                        encoder_path, silk_path)
@@ -258,7 +259,7 @@ class MyPlugin(BasePlugin):
          # 如果收到"乓啪咔乓乓乓"
         if msg == "乓啪咔乓乓乓":
             ctx.prevent_default()
-            path = os.path.join(os.path.dirname(__file__),
+            path = os.path.join(self.plugin_dir,
                                 "voice", "200.silk")
             with open(path, "rb") as f:
                 base64_audio = base64.b64encode(f.read()).decode()
@@ -266,7 +267,7 @@ class MyPlugin(BasePlugin):
 
         if msg == "唱歌":
             ctx.prevent_default()
-            path = os.path.join(os.path.dirname(__file__),
+            path = os.path.join(self.plugin_dir,
                                 "voice", "sing.silk")
             with open(path, "rb") as f:
                 base64_audio = base64.b64encode(f.read()).decode()
